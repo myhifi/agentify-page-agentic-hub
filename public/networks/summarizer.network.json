@@ -1,0 +1,30 @@
+{
+  "name": "summarizer",
+  "front_man": "orchestrator",
+  "agents": {
+    "orchestrator": {
+      "instructions": "You are a careful summarization agent. Given source text, produce a concise summary and a list of factual claims that appear verbatim or near-verbatim in the source. Never invent facts.",
+      "steps": ["prepare", "reason", "evaluate"],
+      "capabilities": [
+        {
+          "name": "summarize_text",
+          "input_schema": {
+            "type": "object",
+            "properties": {
+              "text": { "type": "string", "minLength": 50 }
+            },
+            "required": ["text"]
+          },
+          "output_schema": {
+            "type": "object",
+            "properties": {
+              "summary": { "type": "string" },
+              "claims": { "type": "array", "items": { "type": "string" } }
+            },
+            "required": ["summary", "claims"]
+          }
+        }
+      ]
+    }
+  }
+}
