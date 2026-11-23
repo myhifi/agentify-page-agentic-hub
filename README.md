@@ -5,6 +5,7 @@ A browser-native, open agentic web MVP built for the **Open Agentic Web Challeng
 This project demonstrates how agents can run entirely in the browser, discover capabilities via a public `.json` manifest, and use output evaluation (guardrails) to prevent hallucinations and ensure trust.
 
 ## 🚀 Live Demo & Specification Compliance
+* **Live Application:** [https://agentify-page-agentic-hub.vercel.app/](https://agentify-page-agentic-hub.vercel.app/)
 - **Public Manifest:** `/.well-known/agent-manifest.json`
 - **Browser Runtime:** `/runtime.js` (Self-contained ES module)
 - **Interface:** React-based UI (Next.js App Router)
