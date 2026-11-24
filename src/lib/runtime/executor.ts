@@ -1,5 +1,4 @@
-import type { AgentDefinition, NetworkDefinition, LLMConfig, AgentResult } from "./types";
-import type { ExecutionTrace } from "./types";
+import type { AgentDefinition, NetworkDefinition, LLMConfig, AgentResult, ExecutionTrace } from "./types";
 import { callLLM } from "./llm";
 import { evaluateOutput } from "./guardrails";
 
@@ -12,12 +11,19 @@ export async function executeAgent(
   if (!agent) throw new Error(`Front agent "${network.front_man}" not found`);
 
   const trace: ExecutionTrace[] = [];
+  const capability = agent.capabilities[0];
 
-  // Step 1 — Prepare
-  const preparedText = input.text.slice(0, 8000); // keep prompt manageable
-  trace.push({ step: "prepare", status: "ok", detail: `Prepared ${preparedText.length} chars` });
+  // DYNAMIC STEP 1: Validate Input against Network Schema
+  const inputSchema = capability.input_schema as { properties?: { text?: { minLength?: number } } };
+  const minLength = inputSchema?.properties?.text?.minLength || 1;
+  if (input.text.length < minLength) {
+    throw new Error(`Input text is too short. Minimum length is ${minLength} characters.`);
+  }
+  trace.push({ step: "prepare", status: "ok", detail: `Validated input (${input.text.length} chars)` });
 
-  // Step 2 — Reason
+  const preparedText = input.text.slice(0, 8000);
+
+  // DYNAMIC STEP 2: Reason
   let raw: unknown;
   try {
     raw = await callLLM(
@@ -31,7 +37,7 @@ export async function executeAgent(
     throw e;
   }
 
-  // Step 3 — Evaluate
+  // DYNAMIC STEP 3: Evaluate Output
   const { parsed, guardrails } = evaluateOutput(raw, preparedText);
   trace.push({
     step: "evaluate",

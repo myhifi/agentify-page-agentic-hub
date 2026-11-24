@@ -3982,8 +3982,8 @@ var z = /* @__PURE__ */ Object.freeze({
 
 // src/lib/runtime/guardrails.ts
 var outputSchema = z.object({
-  summary: z.string().min(10),
-  claims: z.array(z.string()).min(1)
+  summary: z.string().min(10, "Summary must be at least 10 characters"),
+  claims: z.array(z.string()).min(1, "At least one claim is required")
 });
 function evaluateOutput(raw, sourceText) {
   const checks = [];
@@ -3997,6 +3997,7 @@ function evaluateOutput(raw, sourceText) {
     return { parsed: { summary: "", claims: [] }, guardrails: { passed: false, checks } };
   }
   const sourceTokens = tokenSet(sourceText);
+  const normalizedSource = sourceText.toLowerCase().replace(/[^\w\s]/g, "");
   const grounded = parsed.data.claims.every((claim) => {
     const claimTokens = tokenSet(claim);
     if (claimTokens.size === 0) return false;
@@ -4004,19 +4005,31 @@ function evaluateOutput(raw, sourceText) {
     claimTokens.forEach((t) => {
       if (sourceTokens.has(t)) overlap++;
     });
-    return overlap / claimTokens.size >= 0.6;
+    const score = overlap / claimTokens.size;
+    const normalizedClaim = claim.toLowerCase().replace(/[^\w\s]/g, "");
+    const isDirectMatch = normalizedSource.includes(normalizedClaim);
+    return isDirectMatch || score >= 0.8;
   });
   checks.push({
     name: "groundedness",
     passed: grounded,
-    detail: grounded ? void 0 : "One or more claims are not sufficiently grounded in the source text."
+    detail: grounded ? "All claims are grounded in the source." : "One or more claims contain facts or phrasing not present in the source text."
   });
-  const forbidden = ["i cannot", "i'm sorry", "as an ai"];
-  const safe = !forbidden.some((f) => parsed.data.summary.toLowerCase().includes(f));
+  const unsafePatterns = [
+    /ignore (all )?previous instructions/i,
+    /system prompt/i,
+    /you are now/i,
+    /i cannot (summarize|provide|do)/i,
+    /i('m| am) sorry/i,
+    /as an ai/i,
+    /<script/i
+  ];
+  const rawOutputString = `${parsed.data.summary} ${parsed.data.claims.join(" ")}`;
+  const safe = !unsafePatterns.some((pattern) => pattern.test(rawOutputString));
   checks.push({
     name: "safety",
     passed: safe,
-    detail: safe ? void 0 : "Output contains a refusal phrase."
+    detail: safe ? "No safety violations detected." : "Output triggered a safety or prompt-injection filter."
   });
   return {
     parsed: parsed.data,
@@ -4038,8 +4051,14 @@ async function executeAgent(network, input, llmConfig) {
   const agent = network.agents[network.front_man];
   if (!agent) throw new Error(`Front agent "${network.front_man}" not found`);
   const trace = [];
+  const capability = agent.capabilities[0];
+  const inputSchema = capability.input_schema;
+  const minLength = inputSchema?.properties?.text?.minLength || 1;
+  if (input.text.length < minLength) {
+    throw new Error(`Input text is too short. Minimum length is ${minLength} characters.`);
+  }
+  trace.push({ step: "prepare", status: "ok", detail: `Validated input (${input.text.length} chars)` });
   const preparedText = input.text.slice(0, 8e3);
-  trace.push({ step: "prepare", status: "ok", detail: `Prepared ${preparedText.length} chars` });
   let raw;
   try {
     raw = await callLLM(

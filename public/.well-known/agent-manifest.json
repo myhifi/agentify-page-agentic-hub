@@ -2,7 +2,7 @@
   "version": "0.3",
   "site": {
     "name": "AgentifyPage Agentic Hub",
-    "origin": "https://your-site.vercel.app",
+    "origin": "https://agentify-page-agentic-hub.vercel.app",
     "description": "A browser-native agentic hub for summarizing and evaluating web content with guardrails."
   },
   "networks": [

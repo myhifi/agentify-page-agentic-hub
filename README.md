@@ -16,9 +16,9 @@ The agent execution follows a strict 3-step flow:
 1. **Prepare:** Normalizes and extracts context from the pasted web content.
 2. **Reason:** Calls the LLM via BYOK to generate a summary and extract claims.
 3. **Evaluate:** Runs local, zero-latency guardrails:
-   - `Schema`: Validates JSON output using Zod.
-   - `Groundedness`: Uses Jaccard-style token overlap to ensure claims are backed by the source text.
-   - `Safety`: Blocks refusal phrases or unsafe outputs.
+   - `Schema`: Validates JSON structure using Zod.
+   - `Groundedness`: Uses a strict Token Containment algorithm (checking for direct substring matches or 80% token overlap) to ensure claims are mathematically backed by the source text.
+   - `Safety`: Uses Regex pattern matching to block prompt injections (e.g., "ignore previous instructions") and refusal phrases (e.g., "I cannot summarize").
 
 If any check fails, the UI displays an amber **REVIEW** badge. Otherwise, it shows a green **PASSED** badge.
 
