@@ -9,7 +9,7 @@ This project demonstrates how agents can run entirely in the browser, discover c
 * **Public Manifest:** `/.well-known/agent-manifest.json`
 * **Browser Runtime:** `/runtime.js` (Self-contained ES module)
 * **Interface:** React-based UI (Next.js App Router)
-* **BYOK:** 100% Client-side Bring-Your-Own-Key for Gemini and Groq. No API keys are stored on any server.
+* **BYOK:** 100% Client-side Bring-Your-Own-Key for Gemini, Groq, and Otari. No API keys are stored on any server.
 
 ## 🧠 Architecture
 The agent execution follows a strict multi-step flow designed for safety:

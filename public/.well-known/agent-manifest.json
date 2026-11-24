@@ -16,6 +16,6 @@
   "llm": {
     "default_provider": "gemini",
     "byok": true,
-    "providers": ["gemini", "groq"]
+    "providers": ["gemini", "groq", "otari"]
   }
 }

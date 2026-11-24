@@ -32,7 +32,7 @@ export interface Capability {
 }
 
 export interface LLMConfig {
-  provider: "gemini" | "groq";
+  provider: "gemini" | "groq" | "otari";
   apiKey: string;
   model: string;
 }

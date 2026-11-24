@@ -22,6 +22,7 @@ const PRESETS = [
 const MODELS = {
   gemini: ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-1.5-flash"],
   groq: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"],
+  otari: ["gpt-4o", "claude-3-5-sonnet-20240620", "mzai:moonshotai/Kimi-K2.7-Code"],
 };
 
 export default function Home() {
@@ -32,7 +33,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   // BYOK settings
-  const [provider, setProvider] = useState<"gemini" | "groq">("gemini");
+  const [provider, setProvider] = useState<"gemini" | "groq" | "otari">("gemini");
   const [model, setModel] = useState("gemini-2.5-flash");
   const [apiKey, setApiKey] = useState("");
   
@@ -42,7 +43,7 @@ export default function Home() {
 
   // Load settings from localStorage on mount
   useEffect(() => {
-    const savedProvider = localStorage.getItem("byok_provider") as "gemini" | "groq";
+    const savedProvider = localStorage.getItem("byok_provider") as "gemini" | "groq" | "otari";
     const savedModel = localStorage.getItem("byok_model");
     const savedKey = localStorage.getItem("byok_key");
 
@@ -66,7 +67,7 @@ export default function Home() {
     }
   }, [provider, model, customModel, isCustomModel, apiKey]);
 
-  const handleProviderChange = (newProvider: "gemini" | "groq") => {
+  const handleProviderChange = (newProvider: "gemini" | "groq" | "otari") => {
     setProvider(newProvider);
     setModel(MODELS[newProvider][0]);
     setIsCustomModel(false);
@@ -118,6 +119,7 @@ export default function Home() {
             >
               <option value="gemini">Google Gemini</option>
               <option value="groq">Groq</option>
+              <option value="otari">Mozilla Otari (Router)</option>
             </select>
           </label>
           
@@ -158,12 +160,16 @@ export default function Home() {
             <div className="flex justify-between items-center">
               <label htmlFor="api-key">API Key</label>
               <a 
-                href={provider === "gemini" ? "https://aistudio.google.com/app/apikey" : "https://console.groq.com/keys"} 
+                href={
+                  provider === "gemini" ? "https://aistudio.google.com/app/apikey" :
+                  provider === "groq" ? "https://console.groq.com/keys" :
+                  "https://otari.ai"
+                }
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:underline text-xs"
               >
-                Get your {provider === "gemini" ? "Gemini" : "Groq"} API key ↗
+                Get your {provider === "gemini" ? "Gemini" : provider === "groq" ? "Groq" : "Otari"} API key ↗
               </a>
             </div>
             <input

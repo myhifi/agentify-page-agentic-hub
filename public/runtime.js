@@ -20,6 +20,9 @@ async function callLLM(config, system, user) {
   if (config.provider === "groq") {
     return callGroq(config, system, user);
   }
+  if (config.provider === "otari") {
+    return callOtari(config, system, user);
+  }
   throw new Error(`Unsupported provider: ${config.provider}`);
 }
 async function callGemini(config, system, user) {
@@ -63,6 +66,30 @@ async function callGroq(config, system, user) {
   const data = await res.json();
   const text = data.choices?.[0]?.message?.content;
   if (!text) throw new Error("Groq returned no text");
+  return JSON.parse(text);
+}
+async function callOtari(config, system, user) {
+  const url = "https://api.otari.ai/api/v1/chat/completions";
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${config.apiKey}`
+    },
+    body: JSON.stringify({
+      model: config.model,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.2
+    })
+  });
+  if (!res.ok) throw new Error(`Otari error ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content;
+  if (!text) throw new Error("Otari returned no text");
   return JSON.parse(text);
 }
 
