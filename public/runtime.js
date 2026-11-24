@@ -3985,6 +3985,27 @@ var outputSchema = z.object({
   summary: z.string().min(10, "Summary must be at least 10 characters"),
   claims: z.array(z.string()).min(1, "At least one claim is required")
 });
+function evaluateInput(text) {
+  const injectionPatterns = [
+    /ignore (all )?previous instructions/i,
+    /disregard (all )?previous/i,
+    /system note:/i,
+    /system prompt/i,
+    /you must (reply|respond|output)/i,
+    /include a claim that/i,
+    /do not include any other text/i,
+    /forget (all )?previous/i
+  ];
+  for (const pattern of injectionPatterns) {
+    if (pattern.test(text)) {
+      return {
+        passed: false,
+        detail: `Prompt injection detected in input: matched "${pattern.source}"`
+      };
+    }
+  }
+  return { passed: true };
+}
 function evaluateOutput(raw, sourceText) {
   const checks = [];
   const parsed = outputSchema.safeParse(raw);
@@ -4031,6 +4052,23 @@ function evaluateOutput(raw, sourceText) {
     passed: safe,
     detail: safe ? "No safety violations detected." : "Output triggered a safety or prompt-injection filter."
   });
+  const fictionPatterns = [
+    /fictional/i,
+    /lunar hotel/i,
+    /sci-fi/i,
+    /time travel/i,
+    /magic/i,
+    /unicorn/i,
+    /impossible/i,
+    /alien/i
+  ];
+  const claimsText = parsed.data.claims.join(" ");
+  const isPlausible = !fictionPatterns.some((pattern) => pattern.test(claimsText));
+  checks.push({
+    name: "plausibility",
+    passed: isPlausible,
+    detail: isPlausible ? "Claims appear realistic." : "Warning: Source text contains explicit fictional or highly implausible claims."
+  });
   return {
     parsed: parsed.data,
     guardrails: {
@@ -4056,6 +4094,21 @@ async function executeAgent(network, input, llmConfig) {
   const minLength = inputSchema?.properties?.text?.minLength || 1;
   if (input.text.length < minLength) {
     throw new Error(`Input text is too short. Minimum length is ${minLength} characters.`);
+  }
+  const inputCheck = evaluateInput(input.text);
+  if (!inputCheck.passed) {
+    trace.push({ step: "evaluate", status: "error", detail: inputCheck.detail });
+    return {
+      result: {
+        summary: "Blocked due to prompt injection attempt.",
+        claims: [],
+        guardrails: {
+          passed: false,
+          checks: [{ name: "safety (pre-flight)", passed: false, detail: inputCheck.detail }]
+        }
+      },
+      trace
+    };
   }
   trace.push({ step: "prepare", status: "ok", detail: `Validated input (${input.text.length} chars)` });
   const preparedText = input.text.slice(0, 8e3);

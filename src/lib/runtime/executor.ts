@@ -1,6 +1,6 @@
 import type { AgentDefinition, NetworkDefinition, LLMConfig, AgentResult, ExecutionTrace } from "./types";
 import { callLLM } from "./llm";
-import { evaluateOutput } from "./guardrails";
+import { evaluateOutput, evaluateInput } from "./guardrails";
 
 export async function executeAgent(
   network: NetworkDefinition,
@@ -19,6 +19,24 @@ export async function executeAgent(
   if (input.text.length < minLength) {
     throw new Error(`Input text is too short. Minimum length is ${minLength} characters.`);
   }
+
+  // PRE-FLIGHT GUARDRAIL: Block prompt injection before calling LLM
+  const inputCheck = evaluateInput(input.text);
+  if (!inputCheck.passed) {
+    trace.push({ step: "evaluate", status: "error", detail: inputCheck.detail });
+    return {
+      result: {
+        summary: "Blocked due to prompt injection attempt.",
+        claims: [],
+        guardrails: {
+          passed: false,
+          checks: [{ name: "safety (pre-flight)", passed: false, detail: inputCheck.detail }]
+        }
+      },
+      trace
+    };
+  }
+
   trace.push({ step: "prepare", status: "ok", detail: `Validated input (${input.text.length} chars)` });
 
   const preparedText = input.text.slice(0, 8000);

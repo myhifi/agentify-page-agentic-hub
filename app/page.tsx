@@ -116,8 +116,8 @@ export default function Home() {
               value={provider}
               onChange={e => handleProviderChange(e.target.value as any)}
             >
-              <option value="gemini">Gemini (free tier)</option>
-              <option value="groq">Groq (free tier)</option>
+              <option value="gemini">Google Gemini</option>
+              <option value="groq">Groq</option>
             </select>
           </label>
           
@@ -154,16 +154,27 @@ export default function Home() {
             </label>
           )}
 
-          <label className="text-sm font-medium sm:col-span-2">
-            API Key
+          <div className="text-sm font-medium sm:col-span-2 space-y-1">
+            <div className="flex justify-between items-center">
+              <label htmlFor="api-key">API Key</label>
+              <a 
+                href={provider === "gemini" ? "https://aistudio.google.com/app/apikey" : "https://console.groq.com/keys"} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline text-xs"
+              >
+                Get your {provider === "gemini" ? "Gemini" : "Groq"} API key ↗
+              </a>
+            </div>
             <input
-              className="mt-1 w-full rounded-md border border-gray-300 p-2 font-mono"
+              id="api-key"
+              className="w-full rounded-md border border-gray-300 p-2 font-mono"
               type="password"
               value={apiKey}
               onChange={e => setApiKey(e.target.value)}
               placeholder="Paste your key here"
             />
-          </label>
+          </div>
         </div>
         <p className="mt-3 text-xs text-gray-500">
           Keys are saved locally in your browser's <code>localStorage</code> and are only sent to the selected provider. We do not store your key on any server.
@@ -190,10 +201,16 @@ export default function Home() {
           value={text}
           onChange={e => setText(e.target.value)}
         />
+        {!apiKey && (
+          <p className="text-sm text-amber-600 font-medium mb-2">
+            ⚠️ Please enter your API Key in the <strong>BYOK Settings</strong> above to enable the agent.
+          </p>
+        )}
+        
         <button
           onClick={runAgent}
           disabled={loading || !text || !apiKey || (isCustomModel && !customModel)}
-          className="rounded-md bg-black px-5 py-2.5 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50"
+          className="rounded-md bg-black px-5 py-2.5 font-medium text-white transition hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? "Running agent…" : "Run Summarizer Agent"}
         </button>

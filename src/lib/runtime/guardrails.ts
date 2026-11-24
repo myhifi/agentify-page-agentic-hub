@@ -7,6 +7,30 @@ const outputSchema = z.object({
   claims: z.array(z.string()).min(1, "At least one claim is required"),
 });
 
+// PRE-FLIGHT: Scan input for prompt injection before sending to LLM
+export function evaluateInput(text: string): { passed: boolean; detail?: string } {
+  const injectionPatterns = [
+    /ignore (all )?previous instructions/i,
+    /disregard (all )?previous/i,
+    /system note:/i,
+    /system prompt/i,
+    /you must (reply|respond|output)/i,
+    /include a claim that/i,
+    /do not include any other text/i,
+    /forget (all )?previous/i
+  ];
+
+  for (const pattern of injectionPatterns) {
+    if (pattern.test(text)) {
+      return {
+        passed: false,
+        detail: `Prompt injection detected in input: matched "${pattern.source}"`
+      };
+    }
+  }
+  return { passed: true };
+}
+
 export function evaluateOutput(raw: unknown, sourceText: string): {
   parsed: { summary: string; claims: string[] };
   guardrails: GuardrailResult;
@@ -70,6 +94,28 @@ export function evaluateOutput(raw: unknown, sourceText: string): {
     name: "safety",
     passed: safe,
     detail: safe ? "No safety violations detected." : "Output triggered a safety or prompt-injection filter.",
+  });
+
+  // Check 4: Plausibility / Fiction Notice
+  // We flag explicit fiction as a "REVIEW" so the user knows the source text might be fictional, but we still allow the output to render.
+  const fictionPatterns = [
+    /fictional/i,
+    /lunar hotel/i,
+    /sci-fi/i,
+    /time travel/i,
+    /magic/i,
+    /unicorn/i,
+    /impossible/i,
+    /alien/i
+  ];
+  
+  const claimsText = parsed.data.claims.join(" ");
+  const isPlausible = !fictionPatterns.some(pattern => pattern.test(claimsText));
+
+  checks.push({
+    name: "plausibility",
+    passed: isPlausible,
+    detail: isPlausible ? "Claims appear realistic." : "Warning: Source text contains explicit fictional or highly implausible claims.",
   });
 
   return {
