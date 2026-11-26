@@ -1,6 +1,8 @@
 export interface AgentManifest {
   version: string;
   site: { name: string; origin: string; description: string };
+  llm_router?: { default_provider: string; byok: boolean; providers: string[] };
+  peer_policy?: { allow_peers?: boolean; allowed_peers?: string[]; peer_origins?: string[] };
   networks: NetworkEntry[];
   llm: { default_provider: string; byok: boolean; providers: string[] };
   policy?: { peer_origins?: string[] };
@@ -16,6 +18,13 @@ export interface NetworkEntry {
 export interface NetworkDefinition {
   name: string;
   front_man: string;
+  tools?: {
+    name: string;
+    description: string;
+    instructions: string;
+    input_schema: Record<string, unknown>;
+    output_schema: Record<string, unknown>;
+  }[];
   agents: Record<string, AgentDefinition>;
 }
 

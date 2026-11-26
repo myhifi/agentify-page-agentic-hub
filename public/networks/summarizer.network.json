@@ -1,6 +1,28 @@
 {
   "name": "summarizer",
   "front_man": "orchestrator",
+  "tools": [
+    {
+      "name": "orchestrator",
+      "description": "Careful summarization agent that produces a concise summary and grounded claims from source text without inventing facts.",
+      "instructions": "You are a careful summarization agent. Given source text, produce a concise summary and a list of factual claims that appear verbatim or near-verbatim in the source. Never invent facts.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "text": { "type": "string", "minLength": 50 }
+        },
+        "required": ["text"]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "summary": { "type": "string" },
+          "claims": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["summary", "claims"]
+      }
+    }
+  ],
   "agents": {
     "orchestrator": {
       "instructions": "You are a careful summarization agent. Given source text, produce a concise summary and a list of factual claims that appear verbatim or near-verbatim in the source. Never invent facts.",

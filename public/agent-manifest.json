@@ -5,6 +5,15 @@
     "origin": "https://agentify-page-agentic-hub.vercel.app",
     "description": "A browser-native agentic hub for summarizing and evaluating web content with guardrails."
   },
+  "llm_router": {
+    "default_provider": "gemini",
+    "byok": true,
+    "providers": ["gemini", "groq", "otari"]
+  },
+  "peer_policy": {
+    "allow_peers": true,
+    "allowed_peers": ["*"]
+  },
   "networks": [
     {
       "name": "summarizer",
