@@ -1,0 +1,21 @@
+{
+  "version": "0.3",
+  "site": {
+    "name": "AgentifyPage Agentic Hub",
+    "origin": "https://agentify-page-agentic-hub.vercel.app",
+    "description": "A browser-native agentic hub for summarizing and evaluating web content with guardrails."
+  },
+  "networks": [
+    {
+      "name": "summarizer",
+      "front_man": "orchestrator",
+      "hocon": "/networks/summarizer.network.json",
+      "description": "Multi-step summarization agent with groundedness evaluation."
+    }
+  ],
+  "llm": {
+    "default_provider": "gemini",
+    "byok": true,
+    "providers": ["gemini", "groq", "otari"]
+  }
+}
